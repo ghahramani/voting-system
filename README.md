@@ -16,6 +16,8 @@ A community-powered PS1, PS3, and Sega game ranking board. Games grow as they co
 
 The Worker serves the built static site and exposes authentication, arena, game, and voting APIs. Arena creators become that arena's admins, and only the admin can add games. Voting is anonymous and requires no account: a secure device cookie plus D1 uniqueness rules prevents one device from voting for the same game twice. This project does not deploy automatically from the local machine.
 
+Each arena has a shareable clean URL such as `https://your-worker.workers.dev/my-rpg-arena`. Opening that link loads the arena directly; no login is required to vote.
+
 ## Local preview
 
 ```sh
