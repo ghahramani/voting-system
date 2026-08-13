@@ -28,17 +28,21 @@ async function hashPassword(password: string, salt: string = crypto.randomUUID()
 async function checkPassword(password: string, stored: string) { const [salt, expected] = stored.split(':'); return (await hashPassword(password, salt)).split(':')[1] === expected; }
 
 app.post('/api/auth/register', async c => {
-  const body = await c.req.json<{ username?: string; password?: string }>(); const username = body.username?.trim();
-  if (!username || !body.password || username.length < 3 || body.password.length < 8) return json(c, { error: 'Username needs 3+ characters and password needs 8+ characters.' }, 400);
-  if (!c.env.DB) return json(c, { user: { id: 1, username } }, 201);
-  try { const hash = await hashPassword(body.password); const result = await c.env.DB.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').bind(username, hash).run(); return json(c, { user: { id: result.meta.last_row_id, username } }, 201); } catch { return json(c, { error: 'That username is already taken.' }, 409); }
+  try {
+    const body = await c.req.json<{ username?: string; password?: string }>(); const username = body.username?.trim();
+    if (!username || !body.password || username.length < 3 || body.password.length < 8) return json(c, { error: 'Username needs 3+ characters and password needs 8+ characters.' }, 400);
+    if (!c.env.DB) return json(c, { user: { id: 1, username } }, 201);
+    const hash = await hashPassword(body.password); const result = await c.env.DB.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').bind(username, hash).run(); return json(c, { user: { id: result.meta.last_row_id, username } }, 201);
+  } catch (error) { console.error('register failed', error); return json(c, { error: 'Registration failed. Make sure the D1 migrations have been applied.' }, 500); }
 });
 app.post('/api/auth/login', async c => {
-  const body = await c.req.json<{ username?: string; password?: string }>();
-  if (!c.env.DB) return json(c, { user: { id: 1, username: body.username || 'You' } });
-  const user = await c.env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(body.username?.trim()).first<{ id: number; username: string; password_hash: string }>();
-  if (!user || !body.password || !(await checkPassword(body.password, user.password_hash))) return json(c, { error: 'Incorrect username or password.' }, 401);
-  const token = crypto.randomUUID(); await c.env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 days'))").bind(token, user.id).run(); setSession(c, token); return json(c, { user: { id: user.id, username: user.username } });
+  try {
+    const body = await c.req.json<{ username?: string; password?: string }>();
+    if (!c.env.DB) return json(c, { user: { id: 1, username: body.username || 'You' } });
+    const user = await c.env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(body.username?.trim()).first<{ id: number; username: string; password_hash: string }>();
+    if (!user || !body.password || !(await checkPassword(body.password, user.password_hash))) return json(c, { error: 'Incorrect username or password.' }, 401);
+    const token = crypto.randomUUID(); await c.env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 days'))").bind(token, user.id).run(); setSession(c, token); return json(c, { user: { id: user.id, username: user.username } });
+  } catch (error) { console.error('login failed', error); return json(c, { error: 'Login is temporarily unavailable. Make sure the D1 migrations have been applied.' }, 500); }
 });
 app.post('/api/auth/logout', async c => { const token = cookie(c, 'bv_session'); if (c.env.DB && token) await c.env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run(); c.header('Set-Cookie', 'bv_session=; Path=/; Max-Age=0'); return json(c, { ok: true }); });
 app.get('/api/auth/me', async c => json(c, { user: await session(c) }));
