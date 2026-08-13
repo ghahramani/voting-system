@@ -14,7 +14,7 @@ A community-powered PS1, PS3, and Sega game ranking board. Games grow as they co
 
 4. Connect the repository to Cloudflare Workers Builds. Use `npm ci` as the install command, `npm run build` as the build command, and `dist` as the asset directory if requested.
 
-The Worker serves the built static site and exposes authentication, arena, game, and voting APIs. Users register/login, arena creators become that arena's admins, and only the admin can add games. Voting requires an account and uses a secure device cookie plus D1 uniqueness rules, so one device cannot vote for the same game twice—even with multiple accounts. This project does not deploy automatically from the local machine.
+The Worker serves the built static site and exposes authentication, arena, game, and voting APIs. Arena creators become that arena's admins, and only the admin can add games. Voting is anonymous and requires no account: a secure device cookie plus D1 uniqueness rules prevents one device from voting for the same game twice. This project does not deploy automatically from the local machine.
 
 ## Local preview
 

@@ -48,12 +48,10 @@ app.post('/api/arenas', async c => { const user = await session(c); if (!user) r
 app.get('/api/arenas/:id/games', async c => { if (!c.env.DB) return json(c, { games: [] }); const { results } = await c.env.DB.prepare('SELECT * FROM games WHERE arena_id = ? ORDER BY votes DESC, created_at DESC').bind(c.req.param('id')).all(); return json(c, { games: results }); });
 app.post('/api/arenas/:id/games', async c => { const user = await session(c); if (!user) return json(c, { error: 'Only the arena admin can add games. Log in first.' }, 401); const owner = await c.env.DB!.prepare('SELECT id FROM arenas WHERE id = ? AND owner_id = ?').bind(c.req.param('id'), user.id).first(); if (!owner) return json(c, { error: 'Only this arena admin can add games.' }, 403); const body = await c.req.json<{ title?: string; platform?: string; genre?: string }>(); if (!body.title?.trim() || !['PS1', 'PS3', 'SEGA'].includes(body.platform || '')) return json(c, { error: 'Title and valid platform are required.' }, 400); const result = await c.env.DB!.prepare('INSERT INTO games (arena_id, title, platform, genre, submitted_by) VALUES (?, ?, ?, ?, ?)').bind(c.req.param('id'), body.title.trim(), body.platform, body.genre?.trim() || 'Other', user.username).run(); return json(c, { id: result.meta.last_row_id }, 201); });
 app.post('/api/games/:id/vote', async c => {
-  const user = await session(c); if (!user) return json(c, { error: 'Log in to vote.' }, 401);
   const device = deviceId(c); if (device.fresh) setDevice(c, device.id);
   if (!c.env.DB) return json(c, { ok: true });
   try {
     await c.env.DB.prepare('INSERT INTO device_votes (game_id, device_id) VALUES (?, ?)').bind(c.req.param('id'), device.id).run();
-    await c.env.DB.prepare('INSERT INTO votes (game_id, user_id) VALUES (?, ?)').bind(c.req.param('id'), user.id).run();
     await c.env.DB.prepare('UPDATE games SET votes = votes + 1 WHERE id = ?').bind(c.req.param('id')).run();
     return json(c, { ok: true });
   } catch { return json(c, { error: 'This device has already voted for this game.' }, 409); }
