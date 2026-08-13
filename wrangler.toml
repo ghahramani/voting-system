@@ -14,3 +14,4 @@ enabled = true
 binding = "DB"
 database_name = "bubble-vote-db"
 database_id = "eb2ac2a9-7119-498d-9652-95494258ccb2"
+migrations_dir = "./migrations"

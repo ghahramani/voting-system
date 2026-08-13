@@ -5,6 +5,7 @@ type Env = { Bindings: { ASSETS: Fetcher; DB?: D1Database; SESSION_SECRET?: stri
 type User = { id: number; username: string };
 const app = new Hono<Env>();
 app.use('/api/*', cors({ origin: '*', credentials: true }));
+app.onError((error, c) => { console.error('API error', error); return c.json({ error: 'The API is not ready. Apply the D1 migrations, then redeploy.' }, 500); });
 
 const json = (c: any, body: unknown, status = 200) => c.json(body, status);
 const cookie = (c: any, key: string) => c.req.header('Cookie')?.match(new RegExp(`${key}=([^;]+)`))?.[1];
