@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS games (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('PS1', 'PS3', 'SEGA')),
+  genre TEXT NOT NULL DEFAULT 'Other',
+  submitted_by TEXT NOT NULL DEFAULT 'Anonymous',
+  votes INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS games_votes_idx ON games(votes DESC);

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS device_votes (
+  game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  device_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (game_id, device_id)
+);
